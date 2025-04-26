@@ -4,14 +4,12 @@ import datetime
 from tkinter import messagebox
 
 root = tk.Tk()
-root.title("Ημερολόγιο Μήνα")
-root.geometry("300x300")
+root.title("Ημερολόγιο Μήνα + Χρονοδιάγραμμα")
+root.geometry("400x500")  # πιο λογικό μέγεθος
 
-# Μεταβλητές για επιλεγμένο έτος και μήνα
 selected_year = datetime.date.today().year
 selected_month = datetime.date.today().month
 
-# --------- Συνάρτηση για ανανέωση του ημερολογίου ----------
 def update_calendar(year, month):
     global selected_year, selected_month
     selected_year = year
@@ -30,7 +28,7 @@ def update_calendar(year, month):
         day_label = tk.Label(header, text=day, width=4, font=("Arial", 10, "bold"))
         day_label.pack(side="left")
 
-    # Ημέρες του μήνα
+    # Ημέρες
     days = calendar.monthcalendar(year, month)
     today = datetime.date.today()
 
@@ -47,28 +45,31 @@ def update_calendar(year, month):
             day_text = str(day) if day != 0 else ""
             day_label = tk.Label(row_frame, text=day_text, width=4, font=font_style, fg=fg_color, borderwidth=1, relief="solid")
             day_label.pack(side="left", padx=2, pady=2)
+            if day != 0:
+                day_label.bind("<Enter>", lambda e, lbl=day_label: lbl.config(cursor="hand2"))
+                day_label.bind("<Leave>", lambda e, lbl=day_label: lbl.config(cursor="arrow"))
+                day_label.bind("<Button-1>", lambda e, d=day: open_schedule_for_day(d))
 
-# --------- Συνάρτηση για την αλλαγή μήνα (δεξιά ή αριστερά) ----------
+
 def change_month(increment):
     global selected_year, selected_month
     new_month = selected_month + increment
-    if new_month < 1:  # Αν πάμε πριν τον Ιανουάριο, πάμε στο Δεκέμβριο του προηγούμενου έτους
+    if new_month < 1:
         new_month = 12
         selected_year -= 1
-    elif new_month > 12:  # Αν πάμε μετά τον Δεκέμβριο, πάμε στον Ιανουάριο του επόμενου έτους
+    elif new_month > 12:
         new_month = 1
         selected_year += 1
 
     update_calendar(selected_year, new_month)
 
-# --------- Συνάρτηση για το άνοιγμα του input για το έτος ---------
 def open_year_input():
-    def set_year(event=None):  # Επέκταση για να δέχεται και το event του Enter
+    def set_year(event=None):
         try:
             y = int(year_entry.get())
             if 1930 <= y <= 2125:
                 update_calendar(y, selected_month)
-                popup.destroy()  # Κλείνει ΜΟΝΟ αν η είσοδος είναι σωστή
+                popup.destroy()
             else:
                 messagebox.showerror("Σφάλμα", "Εισάγετε έτος από 1930 έως 2125.")
         except ValueError:
@@ -78,7 +79,6 @@ def open_year_input():
     popup.title("Επιλογή Έτους")
     popup.geometry("250x100")
     popup.resizable(False, False)
-
     popup.transient(root)
     popup.grab_set()
     popup.focus_force()
@@ -87,36 +87,28 @@ def open_year_input():
     year_entry = tk.Entry(popup, justify="center")
     year_entry.pack(pady=5)
     year_entry.focus()
-
-    # Σύνδεση Enter με την υποβολή
     year_entry.bind("<Return>", set_year)
 
     tk.Button(popup, text="OK", command=set_year).pack(pady=5)
 
-
-# --------- Συνάρτηση για την επιστροφή στο σήμερα ---------
 def go_to_today():
     today = datetime.date.today()
     update_calendar(today.year, today.month)
 
-# -------- Menu Bar --------
+# Menu
 menu_bar = tk.Menu(root)
-
-# Προσθήκη της επιλογής "Σήμερα"
 menu_bar.add_command(label="Σήμερα", command=go_to_today)
-
-# Αντί για υπομενού, κατευθείαν εντολή για "Επιλέξτε έτος"
 menu_bar.add_command(label="Επιλέξτε έτος", command=open_year_input)
 
 file_menu = tk.Menu(menu_bar, tearoff=0)
-file_menu.add_command(label="All events")
+file_menu.add_command(label="Όλα τα events")
 file_menu.add_command(label="Νέο event")
 file_menu.add_command(label="Διαγραφή event")
 menu_bar.add_cascade(label="Events", menu=file_menu)
 
 root.config(menu=menu_bar)
 
-# -------- Μήνας και κουμπιά αλλαγής μήνα --------
+# Πάνω μέρος - Ημερολόγιο
 month_frame = tk.Frame(root)
 month_frame.pack(pady=10)
 
@@ -131,9 +123,68 @@ right_arrow.pack(side="left")
 
 frame = tk.Frame(root)
 frame.pack()
+# Frame για το χρονοδιάγραμμα
+schedule_frame = tk.Frame(root)
+schedule_frame.pack(pady=10, fill="both", expand=True)
+
 
 weekdays = ["Δε", "Τρ", "Τε", "Πε", "Πα", "Σα", "Κυ"]
 
 update_calendar(selected_year, selected_month)
+
+
+# Τρέχουσα Ώρα κάτω δεξιά
+def update_time():
+    now = datetime.datetime.now().strftime("%H:%M:%S")
+    time_label.config(text=now)
+    root.after(1000, update_time)  # ανανέωση κάθε 1000ms = 1 δευτερόλεπτο
+
+bottom_frame = tk.Frame(root)
+bottom_frame.pack(side="bottom", fill="x", pady=5, padx=5)
+
+time_label = tk.Label(bottom_frame, font=("Arial", 10))
+time_label.pack(side="right")
+
+update_time()
+
+def open_schedule_for_day(day):
+    # Καθαρίζουμε το παλιό χρονοδιάγραμμα
+    for widget in schedule_frame.winfo_children():
+        widget.destroy()
+
+    # Τίτλος
+    tk.Label(schedule_frame, text=f"Χρονοδιάγραμμα {day}/{selected_month}/{selected_year}", font=("Arial", 12, "bold")).pack(pady=5)
+
+    # Container με Canvas για Scroll
+    container = tk.Frame(schedule_frame)
+    container.pack(pady=5, fill="both", expand=True)
+
+    canvas = tk.Canvas(container)
+    scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
+    scrollable_frame = tk.Frame(canvas)
+
+    scrollable_frame.bind(
+        "<Configure>",
+        lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+    )
+
+    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    canvas.pack(side="left", fill="both", expand=True)
+    scrollbar.pack(side="right", fill="y")
+
+    # Ώρες
+    for hour in range(24):
+        hour_str = f"{hour:02d}:00"
+        row = tk.Frame(scrollable_frame)
+        row.pack(fill="x", padx=5, pady=2)
+
+        hour_label = tk.Label(row, text=hour_str, width=8, anchor="w")
+        hour_label.pack(side="left")
+
+        event_label = tk.Label(row, text="(Καμία καταχώρηση)", fg="gray")
+        event_label.pack(side="left", padx=10)
+
 
 root.mainloop()
