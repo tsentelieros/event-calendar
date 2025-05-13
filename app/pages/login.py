@@ -53,7 +53,7 @@ class LoginPage(ttk.Frame):
             command=lambda: controller.show_frame("SignupPage")
         )
         self.signup_btn.grid(row=5, column=0, columnspan=2, sticky="we", pady=(5,0))
-
+        # Test comment
         # Παρακολούθηση αλλαγών για ενεργοποίηση κουμπιού
         self.username_entry.bind("<KeyRelease>", self.update_login_state)
         self.password_entry.bind("<KeyRelease>", self.update_login_state)
