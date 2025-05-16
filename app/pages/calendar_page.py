@@ -53,6 +53,8 @@ class CalendarPage(ttk.Frame):
         self.update_calendar(self.selected_year, self.selected_month)
         self.update_time()
 
+        ttk.Button(self, text="Επιλογή Έτους", command=self.open_year_input).pack()
+
     def update_calendar(self, year, month):
         self.selected_year = year
         self.selected_month = month
@@ -88,7 +90,7 @@ class CalendarPage(ttk.Frame):
         self.update_calendar(year, month)
 
     def open_year_input(self):
-        popup = ttk.Toplevel(self.controller)
+        popup = tk.Toplevel(self.controller)
         popup.title('Επιλογή Έτους')
         popup.resizable(False, False)
         ttk.Label(popup, text='Έτος (1930-2125):').pack(pady=5)

@@ -2,11 +2,14 @@ import tkinter as tk
 from tkinter import ttk
 from app.pages import LoginPage, SignupPage, CalendarPage
 from app.pages.menu import MenuBar
+from tkcalendar import Calendar  
+from datetime import date
+from app.pages.event_form import EventForm
 
 class Application(tk.Tk):
     def __init__(self):
         super().__init__()
-        
+
         # -------- Global theme configuration --------
         style = ttk.Style(self)
         print("Available themes:", style.theme_names())
@@ -57,13 +60,16 @@ class Application(tk.Tk):
         self.title("EventCalendar")
         self.geometry("800x600")
 
-
+        # Δημιουργία του container frame
         container = ttk.Frame(self, style="Card.TFrame", padding=20)
         container.grid(row=0, column=0, sticky="nsew")
         # κάνε το root window να χωρίζει όλο το χώρο σε 1x1 grid
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
+        # Δημιουργία του calendar widget
+        self.calendar = Calendar(container, selectmode='day', year=2023, month=5, day=5)
+        self.calendar.grid(row=0, column=0, sticky="nsew", pady=20)
 
         self.frames = {}
         for PageClass in (LoginPage, SignupPage, CalendarPage):
@@ -74,17 +80,30 @@ class Application(tk.Tk):
 
         MenuBar.build(
             controller=self,
-            go_to_today=lambda: None,
-            open_year_input=lambda: None,
+            go_to_today=lambda: self.frames["CalendarPage"].go_to_today(),
+            open_year_input=lambda: self.frames["CalendarPage"].open_year_input(),
             open_all_events=lambda: None,
-            open_new_event=lambda: None,
+            open_new_event=self.open_new_event,
             open_delete_event=lambda: None
         )
+     
 
         self.show_frame("LoginPage")
 
     def show_frame(self, page_name):
         self.frames[page_name].tkraise()
+
+    def go_to_today(self):
+        # Λήψη της τρέχουσας ημερομηνίας
+        today = date.today()
+
+        # Ενημέρωση του calendar widget στην τρέχουσα ημερομηνία
+        self.calendar.selection_set(today)
+        self.calendar.focus_set()    
+            
+    def open_new_event(self):
+        new_event_window = tk.Toplevel(self)
+        EventForm(new_event_window)
 
 if __name__ == "__main__":
     app = Application()
