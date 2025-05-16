@@ -81,7 +81,7 @@ class Application(tk.Tk):
         MenuBar.build(
             controller=self,
             go_to_today=lambda: self.frames["CalendarPage"].go_to_today(),
-            open_year_input=lambda: None,
+            open_year_input=lambda: self.frames["CalendarPage"].open_year_input(),
             open_all_events=lambda: None,
             open_new_event=self.open_new_event,
             open_delete_event=lambda: None
