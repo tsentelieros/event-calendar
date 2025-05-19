@@ -11,15 +11,7 @@ class CalendarPage(ttk.Frame):
         self.selected_year = datetime.date.today().year
         self.selected_month = datetime.date.today().month
 
-        # Menu bar
-        MenuBar.build(
-            controller=self.controller,
-            go_to_today=self.go_to_today,
-            open_year_input=self.open_year_input,
-            open_all_events=self.open_all_events,
-            open_new_event=self.open_new_event,
-            open_delete_event=self.open_delete_event
-        )
+        self.menu_built = False
 
         # Calendar header frame
         header_frame = ttk.Frame(self)
@@ -53,7 +45,6 @@ class CalendarPage(ttk.Frame):
         self.update_calendar(self.selected_year, self.selected_month)
         self.update_time()
 
-        ttk.Button(self, text="Επιλογή Έτους", command=self.open_year_input).pack()
 
     def update_calendar(self, year, month):
         self.selected_year = year
@@ -109,7 +100,16 @@ class CalendarPage(ttk.Frame):
                 messagebox.showerror('Σφάλμα', 'Μη έγκυρος αριθμός')
         year_entry.bind('<Return>', set_year)
         ttk.Button(popup, text='OK', command=set_year).pack(pady=5)
+        
+    def logout(self):
+        self.controller.config(menu="")  # καθαρίζει το MenuBar
+        self.menu_built = False          # ώστε να ξαναχτιστεί όταν ξαναμπεί χρήστης
+        self.controller.show_frame("LoginPage")
+  
 
+    def exit_app(self):
+        self.quit()
+           
     def go_to_today(self):
         today = datetime.date.today()
         self.update_calendar(today.year, today.month)
@@ -118,6 +118,20 @@ class CalendarPage(ttk.Frame):
         now = datetime.datetime.now().strftime('%H:%M:%S')
         self.time_label.config(text=now)
         self.after(1000, self.update_time)
+
+    def on_show(self):
+        """Καλείται κάθε φορά που εμφανίζεται η σελίδα"""
+        if not self.menu_built:
+            self.controller.build_menu(
+        go_to_today=self.go_to_today,
+        open_year_input=self.open_year_input,
+        open_all_events=self.open_all_events,
+        open_new_event=self.open_new_event,
+        open_delete_event=self.open_delete_event,
+        logout_func=self.logout,
+        exit_func=self.exit_app
+    )
+        self.menu_built = True      
 
     def open_schedule_for_day(self, day):
         for w in self.schedule_frame.winfo_children(): w.destroy()
@@ -140,6 +154,7 @@ class CalendarPage(ttk.Frame):
 
     # Stubs for MenuBar actions
     def open_all_events(self): messagebox.showinfo('Events','Υπό υλοποίηση')
-    def open_new_event (self): messagebox.showinfo('New Event','Υπό υλοποίηση')
+    def open_new_event(self):
+        self.controller.open_new_event()
     def open_delete_event(self): messagebox.showinfo('Delete Event','Υπό υλοποίηση')
 

@@ -19,7 +19,7 @@ class EventForm:
         self.build_form()  # Δημιουργία της φόρμας
 
     def build_form(self):
-        # Πεδίο τίτλου
+    # Πεδίο τίτλου
         tk.Label(self.master, text="Τίτλος:").pack()
         self.title_entry = tk.Entry(self.master, width=50)
         self.title_entry.pack()
@@ -28,6 +28,12 @@ class EventForm:
         tk.Label(self.master, text="Περιγραφή:").pack()
         self.desc_text = tk.Text(self.master, height=4, width=50)
         self.desc_text.pack()
+
+        # Πεδίο τύπου γεγονότος
+        tk.Label(self.master, text="Τύπος Γεγονότος:").pack()
+        self.type_var = tk.StringVar(value="Γενικό")
+        self.event_types = ["Γενικό", "Συνάντηση", "Εργασία", "Προσωπικό", "Γενέθλια/Γιορτή","Ιατρικό", "Άλλο"]
+        tk.OptionMenu(self.master, self.type_var, *self.event_types).pack()
 
         # Επιλογή ημερομηνίας
         tk.Label(self.master, text="Ημερομηνία:").pack()
@@ -67,6 +73,7 @@ class EventForm:
         # Κουμπί αποθήκευσης
         tk.Button(self.master, text="Αποθήκευση", command=self.save_event).pack(pady=10)
 
+
     def update_end_time_options(self, *args):
         # Ενημέρωση διαθέσιμων ωρών λήξης με βάση την ώρα έναρξης
         selected_start = self.start_var.get()
@@ -96,6 +103,7 @@ class EventForm:
         end_time = self.end_var.get()
         location = self.location_entry.get()
         repeat = self.repeat_var.get()
+        event_type = self.type_var.get()
 
         # Έλεγχος υποχρεωτικών πεδίων
         if not title or not date_str or not start_time or not end_time:
@@ -127,7 +135,8 @@ class EventForm:
             "duration_minutes": duration,
             "location": location,
             "repeat": repeat,
-            "repeat_until": repeat_until
+            "repeat_until": repeat_until,
+            "type": event_type
         }
 
         self.events.append(event)  # Αποθήκευση γεγονότος

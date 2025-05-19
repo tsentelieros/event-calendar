@@ -58,6 +58,8 @@ class LoginPage(ttk.Frame):
         self.username_entry.bind("<KeyRelease>", self.update_login_state)
         self.password_entry.bind("<KeyRelease>", self.update_login_state)
 
+        
+
     def clear_username_placeholder(self, event):
         if self.username_entry.get() == "Όνομα χρήστη":
             self.username_entry.delete(0, END)

@@ -50,6 +50,8 @@ class SignupPage(ttk.Frame):
         self.password_entry.bind("<KeyRelease>", self.update_signup_state)
         self.confirm_entry.bind("<KeyRelease>", self.update_signup_state)
 
+
+
     def clear_username_placeholder(self, event):
         if self.username_entry.get() == "Όνομα χρήστη":
             self.username_entry.delete(0, END)
