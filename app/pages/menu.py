@@ -9,7 +9,7 @@ class MenuBar:
         events_menu = tk.Menu(menu_bar, tearoff=0)
         events_menu.add_command(label="Όλα τα events", command=open_all_events)
         events_menu.add_command(label="Νέο event", command=open_new_event)
-        events_menu.add_command(label="Διαγραφή event", command=open_delete_event)
+        #events_menu.add_command(label="Διαγραφή event", command=open_delete_event)
         menu_bar.add_cascade(label="Events", menu=events_menu)
         logout_menu = tk.Menu(menu_bar,tearoff=0)
         menu_bar.add_cascade(label="Έξοδος",menu=logout_menu)

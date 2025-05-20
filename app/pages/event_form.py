@@ -47,8 +47,8 @@ class EventForm:
 
         # Επιλογή ώρας λήξης
         tk.Label(self.master, text="Ώρα Λήξης:").pack()
-        self.end_var.set(self.time_slots[1])
-        self.end_menu = tk.OptionMenu(self.master, self.end_var, *self.time_slots[1:])
+        self.end_var.set(self.time_slots[0])
+        self.end_menu = tk.OptionMenu(self.master, self.end_var, *self.time_slots)
         self.end_menu.pack()
 
         # Αν αλλάξει η ώρα έναρξης, ενημερώνονται οι διαθέσιμες ώρες λήξης

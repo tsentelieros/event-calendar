@@ -68,8 +68,8 @@ class CalendarPage(ttk.Frame):
                     if d == today.day and year == today.year and month == today.month:
                         lbl.config(background='#ffebcd', foreground='red')
                     # Hover effect
-                    lbl.bind('<Enter>', lambda e, w=lbl: w.state(['!disabled', 'active']))
-                    lbl.bind('<Leave>', lambda e, w=lbl: w.state(['!active']))
+                    lbl.bind('<Enter>', lambda e, w=lbl: (w.state(['!disabled', 'active']), w.config(cursor="hand2")))
+                    lbl.bind('<Leave>', lambda e, w=lbl: (w.state(['!active']), w.config(cursor="arrow")))
                     lbl.bind('<Button-1>', lambda e, day=d: self.open_schedule_for_day(day))
 
     def change_month(self, inc):
