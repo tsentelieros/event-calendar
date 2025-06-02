@@ -34,13 +34,13 @@ class SignupPage(ttk.Frame):
 
         # Sign up button (disabled until valid input)
         self.signup_btn = ttk.Button(
-            self, text="Sign up", style="Login.TButton", state="disabled", command=self.attempt_signup
+            self, text="Sign up", style="Login.TButton", state="disabled",cursor="hand2", command=self.attempt_signup
         )
         self.signup_btn.grid(row=4, column=0, columnspan=2, pady=10)
 
         # Back to Login
         back_btn = ttk.Button(
-            self, text="Back to Login", style="Link.TButton",
+            self, text="Back to Login",cursor="hand2",
             command=lambda: controller.show_frame("LoginPage")
         )
         back_btn.grid(row=5, column=0, columnspan=2)
@@ -49,6 +49,8 @@ class SignupPage(ttk.Frame):
         self.username_entry.bind("<KeyRelease>", self.update_signup_state)
         self.password_entry.bind("<KeyRelease>", self.update_signup_state)
         self.confirm_entry.bind("<KeyRelease>", self.update_signup_state)
+
+
 
     def clear_username_placeholder(self, event):
         if self.username_entry.get() == "Όνομα χρήστη":

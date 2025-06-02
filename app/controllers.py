@@ -45,18 +45,18 @@ def create_event(
     start_time_: time,
     end_time_: time,
     location: str = "",
-    recurrence: Recurrence = Recurrence.value,
+    recurrence: Recurrence = Recurrence.NONE,
     recurrence_end: date = None
 ) -> Event:
     """
     Δημιουργεί ένα νέο event μετά από έλεγχο επικαλύψεων.
     Επιστρέφει το αντικείμενο Event ή ρίχνει ValueError.
     """
-    # Basic time validation
+    # Έλεγχος έγκυρου διαστήματος
     if start_time_ >= end_time_:
         raise ValueError("Η ώρα έναρξης πρέπει να είναι πριν την ώρα λήξης.")
 
-    # Overlap check: same date, any overlapping interval
+    # Έλεγχος επικαλύψεων για την ίδια ημερομηνία
     overlapping = session.query(Event).filter(
         Event.date == date_,
         or_(
@@ -88,6 +88,7 @@ def create_event(
     session.add(ev)
     session.commit()
     return ev
+
 
 
 def get_events_on(date_: date):
