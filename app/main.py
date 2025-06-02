@@ -2,11 +2,14 @@ import tkinter as tk
 from tkinter import ttk
 from app.pages import LoginPage, SignupPage, CalendarPage
 from app.pages.menu import MenuBar
+from tkcalendar import Calendar  
+from datetime import date
+from app.pages.event_form import EventForm
 
 class Application(tk.Tk):
     def __init__(self):
         super().__init__()
-        
+
         # -------- Global theme configuration --------
         style = ttk.Style(self)
         print("Available themes:", style.theme_names())
@@ -57,13 +60,16 @@ class Application(tk.Tk):
         self.title("EventCalendar")
         self.geometry("800x600")
 
-
+        # Δημιουργία του container frame
         container = ttk.Frame(self, style="Card.TFrame", padding=20)
         container.grid(row=0, column=0, sticky="nsew")
         # κάνε το root window να χωρίζει όλο το χώρο σε 1x1 grid
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
+        # Δημιουργία του calendar widget
+        self.calendar = Calendar(container, selectmode='day', year=2023, month=5, day=5)
+        self.calendar.grid(row=0, column=0, sticky="nsew", pady=20)
 
         self.frames = {}
         for PageClass in (LoginPage, SignupPage, CalendarPage):
@@ -72,19 +78,43 @@ class Application(tk.Tk):
             self.frames[page_name] = frame
             frame.grid(row=0, column=0, sticky="nsew")
 
-        MenuBar.build(
-            controller=self,
-            go_to_today=lambda: None,
-            open_year_input=lambda: None,
-            open_all_events=lambda: None,
-            open_new_event=lambda: None,
-            open_delete_event=lambda: None
-        )
-
+        self.menubar = None
         self.show_frame("LoginPage")
-
+     
     def show_frame(self, page_name):
-        self.frames[page_name].tkraise()
+        frame = self.frames[page_name]
+        frame.tkraise()
+
+    # Κάλεσε on_show αν υπάρχει
+        if hasattr(frame, 'on_show'):
+            frame.on_show()
+
+
+    def go_to_today(self):
+        # Λήψη της τρέχουσας ημερομηνίας
+        today = date.today()
+
+        # Ενημέρωση του calendar widget στην τρέχουσα ημερομηνία
+        self.calendar.selection_set(today)
+        self.calendar.focus_set()    
+            
+    def open_new_event(self):
+        new_event_window = tk.Toplevel(self)
+        EventForm(new_event_window)
+
+    def logout(self):
+        self.config(menu="")  # αφαιρεί menubar
+        self.show_frame("LoginPage")  
+
+    def exit_app(self):
+        self.quit()    
+
+
+    def build_menu(self, **kwargs):
+        if self.menubar is not None:
+            self.config(menu="")  # remove previous
+        self.menubar = MenuBar.build(controller=self, **kwargs)
+        self.config(menu=self.menubar)    
 
 if __name__ == "__main__":
     app = Application()

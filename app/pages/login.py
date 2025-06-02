@@ -37,6 +37,7 @@ class LoginPage(ttk.Frame):
             text="Log in",
             style="Primary.TButton",
             state="disabled",
+            cursor="hand2",
             command=self.attempt_login
         )
         self.login_btn.grid(row=3, column=0, columnspan=2, sticky="we", pady=(15,5))
@@ -50,6 +51,7 @@ class LoginPage(ttk.Frame):
             self,
             text="Sign Up",
             style="Link.TButton",
+            cursor="hand2",
             command=lambda: controller.show_frame("SignupPage")
         )
         self.signup_btn.grid(row=5, column=0, columnspan=2, sticky="we", pady=(5,0))
@@ -57,6 +59,8 @@ class LoginPage(ttk.Frame):
         # Παρακολούθηση αλλαγών για ενεργοποίηση κουμπιού
         self.username_entry.bind("<KeyRelease>", self.update_login_state)
         self.password_entry.bind("<KeyRelease>", self.update_login_state)
+
+        
 
     def clear_username_placeholder(self, event):
         if self.username_entry.get() == "Όνομα χρήστη":
