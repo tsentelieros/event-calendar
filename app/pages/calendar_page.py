@@ -3,6 +3,9 @@ from tkinter import ttk, messagebox
 import calendar
 import datetime
 from app.pages.menu import MenuBar
+from app.controllers import get_events_on, session
+from app.pages.event_form import EventForm
+from app.models import Recurrence, Event
 
 class CalendarPage(ttk.Frame):
     def __init__(self, parent, controller):
@@ -21,72 +24,80 @@ class CalendarPage(ttk.Frame):
             open_delete_event=self.open_delete_event
         )
 
-        # Calendar header frame
+        # Header με navigation μήνα
         header_frame = ttk.Frame(self)
         header_frame.pack(pady=10, fill='x')
-        ttk.Button(header_frame, text='<', style='Calendar.TButton', command=lambda: self.change_month(-1)).pack(side='left')
+        ttk.Button(header_frame, text='<', style='Calendar.TButton',
+                   command=lambda: self.change_month(-1)).pack(side='left')
         self.month_label = ttk.Label(header_frame, text='', style='Calendar.TLabel')
         self.month_label.pack(side='left', expand=True)
-        ttk.Button(header_frame, text='>', style='Calendar.TButton', command=lambda: self.change_month(1)).pack(side='right')
+        ttk.Button(header_frame, text='>', style='Calendar.TButton',
+                   command=lambda: self.change_month(1)).pack(side='right')
 
-        # Days of week header
+        # Επικεφαλίδα ημερών
         days_frame = ttk.Frame(self)
         days_frame.pack()
         self.weekdays = ['Δε', 'Τρ', 'Τε', 'Πε', 'Πα', 'Σα', 'Κυ']
         for idx, day in enumerate(self.weekdays):
-            ttk.Label(days_frame, text=day, style='Header.TLabel', anchor='center', width=4).grid(row=0, column=idx, padx=2)
+            ttk.Label(days_frame, text=day, style='Header.TLabel',
+                      anchor='center', width=4).grid(row=0, column=idx, padx=2)
 
-        # Calendar grid
+        # Πλέγμα ημερών
         self.grid_frame = ttk.Frame(self)
         self.grid_frame.pack(pady=5)
 
-        # Schedule frame
+        # Χρονοδιάγραμμα
         self.schedule_frame = ttk.Frame(self)
         self.schedule_frame.pack(pady=10, fill='both', expand=True)
 
-        # Time display
+        # Ώρα κάτω δεξιά
         bottom_frame = ttk.Frame(self)
         bottom_frame.pack(side='bottom', fill='x', padx=5, pady=5)
         self.time_label = ttk.Label(bottom_frame, font=('Arial', 10))
         self.time_label.pack(side='right')
 
+        # Κουμπί επιλογής έτους
+        ttk.Button(self, text="Επιλογή Έτους", command=self.open_year_input).pack()
+
+        # Αρχική εμφάνιση
         self.update_calendar(self.selected_year, self.selected_month)
         self.update_time()
-
-        ttk.Button(self, text="Επιλογή Έτους", command=self.open_year_input).pack()
 
     def update_calendar(self, year, month):
         self.selected_year = year
         self.selected_month = month
         self.month_label.config(text=f'{calendar.month_name[month]} {year}')
 
-        # Clear old
+        # Καθαρισμός προηγούμενων labels
         for widget in self.grid_frame.winfo_children():
             widget.destroy()
 
-        # Fill calendar days
+        # Γεμίζουμε το πλέγμα με τις ημέρες
         days = calendar.monthcalendar(year, month)
         today = datetime.date.today()
         for r, week in enumerate(days, start=1):
             for c, d in enumerate(week):
                 text = str(d) if d else ''
-                lbl = ttk.Label(self.grid_frame, text=text, style='Calendar.TLabel', anchor='center', width=4)
+                lbl = ttk.Label(self.grid_frame, text=text,
+                                style='Calendar.TLabel',
+                                anchor='center', width=4)
                 lbl.grid(row=r, column=c, padx=2, pady=2)
                 if d:
-                    # Highlight today
+                    # highlight σημερινής
                     if d == today.day and year == today.year and month == today.month:
                         lbl.config(background='#ffebcd', foreground='red')
-                    # Hover effect
-                    lbl.bind('<Enter>', lambda e, w=lbl: w.state(['!disabled', 'active']))
+                    # hover effect
+                    lbl.bind('<Enter>', lambda e, w=lbl: w.state(['active']))
                     lbl.bind('<Leave>', lambda e, w=lbl: w.state(['!active']))
+                    # click για εμφάνιση χρονοδιαγράμματος
                     lbl.bind('<Button-1>', lambda e, day=d: self.open_schedule_for_day(day))
 
     def change_month(self, inc):
         year, month = self.selected_year, self.selected_month + inc
         if month < 1:
-            month, year = 12, year-1
+            month, year = 12, year - 1
         elif month > 12:
-            month, year = 1, year+1
+            month, year = 1, year + 1
         self.update_calendar(year, month)
 
     def open_year_input(self):
@@ -97,6 +108,7 @@ class CalendarPage(ttk.Frame):
         year_entry = ttk.Entry(popup, justify='center')
         year_entry.pack(pady=5)
         year_entry.focus()
+
         def set_year(event=None):
             try:
                 y = int(year_entry.get())
@@ -107,6 +119,7 @@ class CalendarPage(ttk.Frame):
                     messagebox.showerror('Σφάλμα', 'Έτος εκτός ορίων')
             except ValueError:
                 messagebox.showerror('Σφάλμα', 'Μη έγκυρος αριθμός')
+
         year_entry.bind('<Return>', set_year)
         ttk.Button(popup, text='OK', command=set_year).pack(pady=5)
 
@@ -120,26 +133,61 @@ class CalendarPage(ttk.Frame):
         self.after(1000, self.update_time)
 
     def open_schedule_for_day(self, day):
-        for w in self.schedule_frame.winfo_children(): w.destroy()
-        ttk.Label(self.schedule_frame, text=f'Χρονοδιάγραμμα {day}/{self.selected_month}/{self.selected_year}', font=('Arial', 12, 'bold')).pack(pady=5)
-        container = ttk.Frame(self.schedule_frame)
-        container.pack(fill='both', expand=True)
-        canvas = tk.Canvas(container, highlightthickness=0)
-        scrollbar = tk.Scrollbar(container, orient='vertical', command=canvas.yview)
-        scroll_frame = ttk.Frame(canvas)
-        scroll_frame.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox('all')))
-        canvas.create_window((0,0), window=scroll_frame, anchor='nw')
-        canvas.configure(yscrollcommand=scrollbar.set)
-        canvas.pack(side='left', fill='both', expand=True)
-        scrollbar.pack(side='right', fill='y')
-        for hour in range(24):
-            row = ttk.Frame(scroll_frame)
-            row.pack(fill='x', padx=5, pady=2)
-            ttk.Label(row, text=f'{hour:02d}:00', width=8, anchor='w').pack(side='left')
-            ttk.Label(row, text='(Καμία καταχώρηση)', foreground='gray').pack(side='left', padx=10)
+        # Καθαρισμός προηγούμενου χρονοδιαγράμματος
+        for w in self.schedule_frame.winfo_children():
+            w.destroy()
 
-    # Stubs for MenuBar actions
-    def open_all_events(self): messagebox.showinfo('Events','Υπό υλοποίηση')
-    def open_new_event (self): messagebox.showinfo('New Event','Υπό υλοποίηση')
-    def open_delete_event(self): messagebox.showinfo('Delete Event','Υπό υλοποίηση')
+        date_ = datetime.date(self.selected_year, self.selected_month, day)
+        ttk.Label(self.schedule_frame,
+                  text=f'Χρονοδιάγραμμα {day}/{self.selected_month}/{self.selected_year}',
+                  font=('Arial', 12, 'bold')).pack(pady=5)
 
+        events = get_events_on(date_)
+        if not events:
+            ttk.Label(self.schedule_frame,
+                      text='(Καμία καταχώρηση)',
+                      foreground='gray').pack(pady=10)
+            return
+
+        # Λίστα events
+        for ev in events:
+            text = f"{ev.start_time.strftime('%H:%M')} - {ev.end_time.strftime('%H:%M')}  {ev.title}"
+            btn = ttk.Button(self.schedule_frame, text=text,
+                             command=lambda e=ev: self.edit_event(e))
+            btn.pack(fill='x', padx=10, pady=2)
+
+    def open_all_events(self):
+        # π.χ. παράθυρο με λίστα όλων των event
+        events = session.query(Event).order_by(Event.date, Event.start_time).all()
+        # Υπό υλοποίηση: παρόμοιο με open_schedule_for_day αλλά για όλες τις ημερομηνίες
+        messagebox.showinfo('Events', f'Συνολικά: {len(events)} γεγονότα')
+
+    def open_new_event(self):
+        # Άνοιγμα dialog προσθήκης
+        win = tk.Toplevel(self.controller)
+        def refresh(_ev=None):
+            self.update_calendar(self.selected_year, self.selected_month)
+        EventForm(win, on_success=refresh)
+
+    def open_delete_event(self):
+        # π.χ. επιλογή μέσω edit_event → κουμπί διαγραφής
+        messagebox.showinfo('Delete Event','Υπό υλοποίηση')
+
+    def edit_event(self, ev):
+        # Άνοιγμα προ-γεμισμένης φόρμας edit
+        win = tk.Toplevel(self.controller)
+        def refresh(_ev=None):
+            self.update_calendar(self.selected_year, self.selected_month)
+            self.open_schedule_for_day(ev.date.day)
+        form = EventForm(win, on_success=refresh)
+        # Προ-γέμισμα πεδίων
+        form.title_entry.insert(0, ev.title)
+        form.desc_text.insert('1.0', ev.description or '')
+        form.date_entry.set_date(ev.date)
+        form.start_var.set(ev.start_time.strftime('%H:%M'))
+        form.end_var.set(ev.end_time.strftime('%H:%M'))
+        form.location_entry.insert(0, ev.location or '')
+        form.repeat_var.set(ev.recurrence.value)
+        if ev.recurrence != Recurrence.NONE and ev.recurrence_end:
+            form.repeat_until_entry.config(state='normal')
+            form.repeat_until_entry.set_date(ev.recurrence_end)

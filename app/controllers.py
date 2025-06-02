@@ -45,7 +45,7 @@ def create_event(
     start_time_: time,
     end_time_: time,
     location: str = "",
-    recurrence: Recurrence = Recurrence.NONE,
+    recurrence: Recurrence = Recurrence.value,
     recurrence_end: date = None
 ) -> Event:
     """
