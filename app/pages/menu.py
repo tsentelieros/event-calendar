@@ -17,3 +17,4 @@ class MenuBar:
         logout_menu.add_command(label="Έξοδος",command=exit_func)
 
         controller.config(menu=menu_bar)
+        return menu_bar

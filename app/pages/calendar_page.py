@@ -252,7 +252,14 @@ class CalendarPage(ttk.Frame):
         form.start_var.set(ev.start_time.strftime('%H:%M'))
         form.end_var.set(ev.end_time.strftime('%H:%M'))
         form.location_entry.insert(0, ev.location or '')
-        form.repeat_var.set(ev.recurrence.value)
+        greek_map = {
+            Recurrence.NONE: "Καμία",
+            Recurrence.DAILY: "Ημερήσια",
+            Recurrence.WEEKLY: "Εβδομαδιαία",
+            Recurrence.MONTHLY: "Μηνιαία",
+            Recurrence.YEARLY: "Ετήσια",
+        }
+        form.repeat_var.set(greek_map.get(ev.recurrence, "Καμία"))
         if ev.recurrence != Recurrence.NONE and ev.recurrence_end:
             form.repeat_until_entry.config(state='normal')
             form.repeat_until_entry.set_date(ev.recurrence_end)
