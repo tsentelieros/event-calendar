@@ -87,6 +87,7 @@ def create_event(
     )
     session.add(ev)
     session.commit()
+    print(ev)
     return ev
 
 

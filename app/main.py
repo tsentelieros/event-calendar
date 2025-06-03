@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from app.pages import LoginPage, SignupPage, CalendarPage
 from app.pages.menu import MenuBar
-from tkcalendar import Calendar  
+from tkcalendar import Calendar
 from datetime import date
 from app.pages.event_form import EventForm
 

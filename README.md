@@ -42,6 +42,9 @@
    git clone https://github.com/tsentelieros/EventCalendar.git
    cd event-calendar
 
+## ▶️ Εγκατάσταση βιβλιοθηκών
+pip install -r requirements.txt   
+
 ## ▶️ Εκτέλεση
    python -m app.main
 
