@@ -29,7 +29,7 @@
 
 ## 🚀 Προαπαιτούμενα
 
-- Python 3.8+  
+ - Python 3.9+
 - Git  
 - (Προτείνεται) Virtual environment  
 
