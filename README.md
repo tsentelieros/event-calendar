@@ -29,7 +29,7 @@
 
 ## 🚀 Προαπαιτούμενα
 
-- Python 3.8+  
+ - Python 3.9+
 - Git  
 - (Προτείνεται) Virtual environment  
 
@@ -41,6 +41,7 @@
    ```bash
    git clone https://github.com/tsentelieros/EventCalendar.git
    cd event-calendar
+   ```
 
 ## ▶️ Εκτέλεση
    python -m app.main
