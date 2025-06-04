@@ -2,13 +2,15 @@ import tkinter as tk
 from tkinter import ttk
 from app.pages import LoginPage, SignupPage, CalendarPage
 from app.pages.menu import MenuBar
-from tkcalendar import Calendar  
+from tkcalendar import Calendar
 from datetime import date
 from app.pages.event_form import EventForm
 
 class Application(tk.Tk):
     def __init__(self):
         super().__init__()
+
+        self.current_user = None
 
         # -------- Global theme configuration --------
         style = ttk.Style(self)
@@ -88,7 +90,9 @@ class Application(tk.Tk):
     # Κάλεσε on_show αν υπάρχει
         if hasattr(frame, 'on_show'):
             frame.on_show()
-
+            
+    def set_current_user(self, user_obj):
+        self.current_user = user_obj            
 
     def go_to_today(self):
         # Λήψη της τρέχουσας ημερομηνίας

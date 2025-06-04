@@ -34,7 +34,12 @@ class SignupPage(ttk.Frame):
 
         # Sign up button (disabled until valid input)
         self.signup_btn = ttk.Button(
-            self, text="Sign up", style="Login.TButton", state="disabled",cursor="hand2", command=self.attempt_signup
+            self,
+            text="Sign up",
+            style="Primary.TButton",
+            state="disabled",
+            cursor="hand2",
+            command=self.attempt_signup,
         )
         self.signup_btn.grid(row=4, column=0, columnspan=2, pady=10)
 
