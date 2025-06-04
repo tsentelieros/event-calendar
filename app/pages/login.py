@@ -14,18 +14,14 @@ class LoginPage(ttk.Frame):
         self.title_label.grid(row=0, column=0, columnspan=2, pady=(0,20))
 
         # Username
-        ttk.Label(self, text="Όνομα:", style="TLabel").grid(
-            row=1, column=0, sticky="e", padx=5, pady=5
-        )
+        ttk.Label(self, text="Όνομα:", style="TLabel").grid(row=1, column=0, sticky="e", padx=5, pady=5)
         self.username_entry = ttk.Entry(self, style="TEntry")
         self.username_entry.insert(0, "Όνομα χρήστη")
         self.username_entry.bind("<FocusIn>", self.clear_username_placeholder)
         self.username_entry.grid(row=1, column=1, sticky="we", padx=5, pady=5)
 
         # Password
-        ttk.Label(self, text="Κωδικός:", style="TLabel").grid(
-            row=2, column=0, sticky="e", padx=5, pady=5
-        )
+        ttk.Label(self, text="Κωδικός:", style="TLabel").grid(row=2, column=0, sticky="e", padx=5, pady=5)
         self.password_entry = ttk.Entry(self, show="", style="TEntry")
         self.password_entry.insert(0, "Κωδικός")
         self.password_entry.bind("<FocusIn>", self.clear_password_placeholder)
@@ -82,9 +78,21 @@ class LoginPage(ttk.Frame):
     def attempt_login(self):
         username = self.username_entry.get().strip()
         password = self.password_entry.get().strip()
-        from app.controllers import check_user
-        if check_user(username, password):
-            messagebox.showinfo("Success", f"Welcome {username}!")
-            self.controller.show_frame("CalendarPage")
-        else:
+        from app.controllers import check_user, get_user_by_username
+
+        # Έλεγχος credentials
+        if not check_user(username, password):
             messagebox.showerror("Error", "Λανθασμένο όνομα ή κωδικός.")
+            return
+
+        # Αν τα credentials είναι σωστά, φέρνουμε το όλο αντικείμενο User
+        user_obj = get_user_by_username(username)
+        if not user_obj:
+            messagebox.showerror("Error", "Σφάλμα στη φόρτωση του χρήστη.")
+            return
+
+        # Ορίζουμε στον Application ποιος είναι ο current_user
+        self.controller.set_current_user(user_obj)
+
+        messagebox.showinfo("Success", f"Welcome {username}!")
+        self.controller.show_frame("CalendarPage")
