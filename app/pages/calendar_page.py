@@ -9,6 +9,7 @@ from app.pages.menu import MenuBar
 from app.controllers import get_events_on, session
 from app.pages.event_form import EventForm
 from app.models import Recurrence, Event
+from app.controllers import delete_event
 
 
 class CalendarPage(ttk.Frame):
@@ -25,16 +26,19 @@ class CalendarPage(ttk.Frame):
         # κάνουμε το header_frame να απλώνεται οριζόντια
         header_frame.columnconfigure(1, weight=1)
 
+        # Κουμπί για μετάβαση στον προηγούμενο μήνα
         btn_prev = ttk.Button(header_frame, text="<", width=3,
-                              command=lambda: self.change_month(-1))
+                            command=lambda: self.change_month(-1))
         btn_prev.grid(row=0, column=0, sticky="w")
 
+        # Ετικέτα που δείχνει τον τρέχοντα μήνα και έτος (π.χ. Ιούνιος 2025)
         self.month_label = ttk.Label(header_frame, text="", anchor="center",
-                                     style="Calendar.TLabel")
+                                    style="Calendar.TLabel")
         self.month_label.grid(row=0, column=1, sticky="ew")
 
+        # Κουμπί για μετάβαση στον επόμενο μήνα
         btn_next = ttk.Button(header_frame, text=">", width=3,
-                              command=lambda: self.change_month(1))
+                            command=lambda: self.change_month(1))
         btn_next.grid(row=0, column=2, sticky="e")
 
         # ───── Πλέγμα ημερολογίου (κεφαλίδες + ημέρες) ─────
@@ -69,9 +73,6 @@ class CalendarPage(ttk.Frame):
         self.time_label = ttk.Label(bottom_frame, font=('Arial', 10))
         self.time_label.grid(row=0, column=1, sticky="e")
 
-        # ───── Κουμπί “Επιλογή Έτους” ─────
-        btn_year = ttk.Button(self, text="Επιλογή Έτους", command=self.open_year_input)
-        btn_year.grid(row=4, column=0, pady=(0, 10))
 
         # Ορίζουμε ότι όλο το CalendarPage απλώνεται:
         self.rowconfigure(2, weight=0)   # το schedule_frame δεν τεντώνεται κατακόρυφα
@@ -240,26 +241,111 @@ class CalendarPage(ttk.Frame):
 
         # Λέμε σε κάθε γεγονός να εμφανίζεται σε button
         for ev in events:
-            text = f"{ev.start_time.strftime('%H:%M')} – {ev.end_time.strftime('%H:%M')}  {ev.title}"
-            btn = ttk.Button(
-                self.schedule_frame,
-                text=text,
-                command=lambda e=ev: self.edit_event(e)
-            )
-            btn.pack(fill="x", padx=10, pady=2)
+            row = ttk.Frame(self.schedule_frame)
+            row.pack(fill="x", padx=10, pady=2)
 
+            # Κουμπί που πατάμε για επεξεργασία 
+            text = f"{ev.start_time.strftime('%H:%M')} – {ev.end_time.strftime('%H:%M')}  {ev.title}"
+            btn_event = ttk.Button(row, text=text, command=lambda e=ev: self.edit_event(e))
+            btn_event.pack(side="left", expand=True, fill="x")
+
+            # κουμπί διαγραφής 🗑
+            btn_del = ttk.Button(row, text="🗑", width=3, command=lambda e=ev: self.confirm_delete_event(e))
+            btn_del.pack(side="right", padx=(5, 0))
+
+    def confirm_delete_event(self, event: Event):
+        if not event:
+            return
+
+        confirm = messagebox.askyesno("Διαγραφή", f"Θες σίγουρα να διαγράψεις το γεγονός: {event.title};")
+        if not confirm:
+            return
+
+        success = delete_event(event.id)
+        if success:
+            messagebox.showinfo("Επιτυχία", "Το γεγονός διαγράφηκε.")
+            self.open_schedule_for_day(event.date.day)
+        else:
+            messagebox.showerror("Σφάλμα", "Η διαγραφή απέτυχε.")        
+
+    # μέθοδος που καλείται για να εμφανίσει όλα τα γεγονότα του χρήστη
     def open_all_events(self):
-        """
-        Εμφανίζει συνολικό αριθμό γεγονότων του τρέχοντα χρήστη.
-        """
+        self.show_all_events_window()  
+
+    # Εμφανίζει νέο παράθυρο με λίστα όλων των γεγονότων του συνδεδεμένου χρήστη
+    def show_all_events_window(self):
+        # Παίρνουμε τον τρέχοντα χρήστη από τον controller
         owner = self.controller.current_user
         if not owner:
+            # Εμφάνιση μηνύματος σφάλματος αν δεν υπάρχει συνδεδεμένος χρήστης
             messagebox.showerror("Σφάλμα", "Δεν υπάρχει συνδεδεμένος χρήστης.")
             return
 
-        all_events = session.query(Event).filter_by(user_id=owner.id) \
+        # Ερώτημα στη βάση για όλα τα γεγονότα του χρήστη, ταξινομημένα κατά ημερομηνία και ώρα έναρξης
+        all_events = session.query(Event).filter_by(user_id=owner.id)\
             .order_by(Event.date, Event.start_time).all()
-        messagebox.showinfo("Events", f"Συνολικά: {len(all_events)} γεγονότα")
+
+        if not all_events:
+            # Αν δεν υπάρχουν γεγονότα, ενημερώνουμε τον χρήστη
+            messagebox.showinfo("Γεγονότα", "Δεν υπάρχουν γεγονότα.")
+            return
+
+        # Δημιουργούμε νέο παράθυρο (Toplevel) για εμφάνιση των γεγονότων
+        win = tk.Toplevel(self.controller)
+        win.title("Όλα τα γεγονότα")     # Τίτλος παραθύρου
+        win.geometry("500x400")          # Σταθερό μέγεθος παραθύρου (πλάτος x ύψος)
+
+        # ─── Scrollable Canvas Frame ───
+        container = ttk.Frame(win)
+        container.pack(fill="both", expand=True)
+
+        canvas = tk.Canvas(container)
+        scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        # ─── Γεγονότα ───
+        recurrence_map = {
+            Recurrence.NONE:      "",
+            Recurrence.DAILY:     "Ημερήσια",
+            Recurrence.WEEKLY:    "Εβδομαδιαία",
+            Recurrence.MONTHLY:   "Μηνιαία",
+            Recurrence.YEARLY:    "Ετήσια",
+        }
+
+        for ev in all_events:
+            row = ttk.Frame(scrollable_frame, padding=5)
+            row.pack(fill="x", padx=5, pady=2)
+
+            recurring_text = ""
+            if ev.recurrence != Recurrence.NONE:
+                freq_text = recurrence_map.get(ev.recurrence, "")
+                if ev.recurrence_end:
+                    recurring_text = f" [{freq_text}, έως {ev.recurrence_end.strftime('%d/%m/%Y')}]"
+                else:
+                    recurring_text = f" [{freq_text}]"
+
+            text = f"{ev.date.strftime('%d/%m/%Y')}  {ev.start_time.strftime('%H:%M')} – {ev.end_time.strftime('%H:%M')}  {ev.title}{recurring_text}"
+            lbl = ttk.Label(row, text=text)
+            lbl.pack(side="left", expand=True, fill="x")
+
+            btn_edit = ttk.Button(row, text="✎", width=3, command=lambda e=ev: self.edit_event(e))
+            btn_edit.pack(side="right", padx=(2, 0))
+
+            btn_del = ttk.Button(row, text="🗑", width=3, command=lambda e=ev: self.confirm_delete_event(e))
+            btn_del.pack(side="right", padx=(2, 0))
+
+
 
     def open_new_event(self):
         """

@@ -112,25 +112,33 @@ class EventForm:
             Recurrence.MONTHLY:   "Μηνιαία",
             Recurrence.YEARLY:    "Ετήσια",
         }
+        # Ορίζει την επανάληψη στο αντίστοιχο ελληνικό κείμενο με βάση το event
         self.repeat_var.set(greek_map.get(ev.recurrence, "Καμία"))
+
+        # Αν υπάρχει επανάληψη και ημερομηνία λήξης επανάληψης
         if ev.recurrence != Recurrence.NONE and ev.recurrence_end:
-            self.toggle_repeat_until()
-            self.repeat_until_entry.set_date(ev.recurrence_end)
+            self.toggle_repeat_until()  # Ενεργοποιεί την είσοδο για την ημερομηνία λήξης επανάληψης
+            self.repeat_until_entry.set_date(ev.recurrence_end)  # Ορίζει την ημερομηνία λήξης
 
-    def update_end_time_options(self, *args):
-        selected = self.start_var.get()
-        idx = self.time_slots.index(selected)
-        allowed = self.time_slots[idx + 1:] or [selected]
-        self.end_var.set(allowed[0])
+        # Ενημερώνει τις διαθέσιμες επιλογές για την ώρα λήξης όταν αλλάζει η ώρα έναρξης
+        def update_end_time_options(self, *args):
+            selected = self.start_var.get()  # Παίρνουμε την επιλεγμένη ώρα έναρξης
+            idx = self.time_slots.index(selected)  # Εντοπίζουμε τη θέση της ώρας στο time_slots
+            allowed = self.time_slots[idx + 1:] or [selected]  # Επιλογές για ώρα λήξης: μετά την έναρξη
 
-        menu = self.end_menu["menu"]
-        menu.delete(0, "end")
-        for t in allowed:
-            menu.add_command(label=t, command=lambda v=t: self.end_var.set(v))
+            self.end_var.set(allowed[0])  # Ορίζουμε την πρώτη έγκυρη επιλογή ως default
 
-    def toggle_repeat_until(self, *args):
-        state = "normal" if self.repeat_var.get() != "Καμία" else "disabled"
-        self.repeat_until_entry.config(state=state)
+            menu = self.end_menu["menu"]  # Παίρνουμε το μενού του OptionMenu
+            menu.delete(0, "end")         # Καθαρίζουμε τις προηγούμενες επιλογές
+            for t in allowed:
+                
+                menu.add_command(label=t, command=lambda v=t: self.end_var.set(v))
+
+        # Ενεργοποιεί ή απενεργοποιεί την είσοδο για ημερομηνία λήξης επανάληψης
+        def toggle_repeat_until(self, *args):
+            # Αν η τιμή της επανάληψης είναι διαφορετική από "Καμία", ενεργοποιείται το πεδίο
+            state = "normal" if self.repeat_var.get() != "Καμία" else "disabled"
+            self.repeat_until_entry.config(state=state)  # Εφαρμόζει την αντίστοιχη κατάσταση
 
     def save_event(self):
         # Διαβάζουμε τιμές από τη φόρμα
