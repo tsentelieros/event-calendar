@@ -121,24 +121,24 @@ class EventForm:
             self.repeat_until_entry.set_date(ev.recurrence_end)  # Ορίζει την ημερομηνία λήξης
 
         # Ενημερώνει τις διαθέσιμες επιλογές για την ώρα λήξης όταν αλλάζει η ώρα έναρξης
-        def update_end_time_options(self, *args):
-            selected = self.start_var.get()  # Παίρνουμε την επιλεγμένη ώρα έναρξης
-            idx = self.time_slots.index(selected)  # Εντοπίζουμε τη θέση της ώρας στο time_slots
-            allowed = self.time_slots[idx + 1:] or [selected]  # Επιλογές για ώρα λήξης: μετά την έναρξη
+    def update_end_time_options(self, *args):
+        selected = self.start_var.get()  # Παίρνουμε την επιλεγμένη ώρα έναρξης
+        idx = self.time_slots.index(selected)  # Εντοπίζουμε τη θέση της ώρας στο time_slots
+        allowed = self.time_slots[idx + 1:] or [selected]  # Επιλογές για ώρα λήξης: μετά την έναρξη
 
-            self.end_var.set(allowed[0])  # Ορίζουμε την πρώτη έγκυρη επιλογή ως default
+        self.end_var.set(allowed[0])  # Ορίζουμε την πρώτη έγκυρη επιλογή ως default
 
-            menu = self.end_menu["menu"]  # Παίρνουμε το μενού του OptionMenu
-            menu.delete(0, "end")         # Καθαρίζουμε τις προηγούμενες επιλογές
-            for t in allowed:
+        menu = self.end_menu["menu"]  # Παίρνουμε το μενού του OptionMenu
+        menu.delete(0, "end")         # Καθαρίζουμε τις προηγούμενες επιλογές
+        for t in allowed:
                 
-                menu.add_command(label=t, command=lambda v=t: self.end_var.set(v))
+            menu.add_command(label=t, command=lambda v=t: self.end_var.set(v))
 
         # Ενεργοποιεί ή απενεργοποιεί την είσοδο για ημερομηνία λήξης επανάληψης
-        def toggle_repeat_until(self, *args):
+    def toggle_repeat_until(self, *args):
             # Αν η τιμή της επανάληψης είναι διαφορετική από "Καμία", ενεργοποιείται το πεδίο
-            state = "normal" if self.repeat_var.get() != "Καμία" else "disabled"
-            self.repeat_until_entry.config(state=state)  # Εφαρμόζει την αντίστοιχη κατάσταση
+        state = "normal" if self.repeat_var.get() != "Καμία" else "disabled"
+        self.repeat_until_entry.config(state=state)  # Εφαρμόζει την αντίστοιχη κατάσταση
 
     def save_event(self):
         # Διαβάζουμε τιμές από τη φόρμα
