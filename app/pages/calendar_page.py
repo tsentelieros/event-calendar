@@ -202,7 +202,6 @@ class CalendarPage(ttk.Frame):
                 open_year_input=self.open_year_input,
                 open_all_events=self.open_all_events,
                 open_new_event=self.open_new_event,
-                open_delete_event=self.open_delete_event,
                 logout_func=self.logout,
                 exit_func=self.exit_app
             )
@@ -277,44 +276,47 @@ class CalendarPage(ttk.Frame):
         # Παίρνουμε τον τρέχοντα χρήστη από τον controller
         owner = self.controller.current_user
         if not owner:
-            # Εμφάνιση μηνύματος σφάλματος αν δεν υπάρχει συνδεδεμένος χρήστης
+            # Εμφάνιση σφάλματος αν δεν υπάρχει συνδεδεμένος χρήστης
             messagebox.showerror("Σφάλμα", "Δεν υπάρχει συνδεδεμένος χρήστης.")
             return
 
-        # Ερώτημα στη βάση για όλα τα γεγονότα του χρήστη, ταξινομημένα κατά ημερομηνία και ώρα έναρξης
+        # Φέρνουμε όλα τα γεγονότα του χρήστη, ταξινομημένα κατά ημερομηνία και ώρα έναρξης
         all_events = session.query(Event).filter_by(user_id=owner.id)\
             .order_by(Event.date, Event.start_time).all()
 
         if not all_events:
-            # Αν δεν υπάρχουν γεγονότα, ενημερώνουμε τον χρήστη
+            # Ενημερώνουμε αν δεν υπάρχουν γεγονότα
             messagebox.showinfo("Γεγονότα", "Δεν υπάρχουν γεγονότα.")
             return
 
-        # Δημιουργούμε νέο παράθυρο (Toplevel) για εμφάνιση των γεγονότων
+        # Δημιουργία νέου παραθύρου για την εμφάνιση των γεγονότων
         win = tk.Toplevel(self.controller)
-        win.title("Όλα τα γεγονότα")     # Τίτλος παραθύρου
-        win.geometry("500x400")          # Σταθερό μέγεθος παραθύρου (πλάτος x ύψος)
+        win.title("Όλα τα γεγονότα")
+        win.geometry("500x400")
 
-        # ─── Scrollable Canvas Frame ───
+        # Δημιουργία container frame που θα κρατά το scrollable περιεχόμενο
         container = ttk.Frame(win)
         container.pack(fill="both", expand=True)
 
+        # Καμβάς για scrolling
         canvas = tk.Canvas(container)
         scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas)
 
+        # Όταν αλλάζει το μέγεθος του scrollable_frame, ενημερώνουμε το scrollregion του καμβά
         scrollable_frame.bind(
             "<Configure>",
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
 
+        # Τοποθετούμε το scrollable_frame μέσα στον καμβά
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
         canvas.configure(yscrollcommand=scrollbar.set)
 
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        # ─── Γεγονότα ───
+        # Χάρτης για το κείμενο επανάληψης (recurrence)
         recurrence_map = {
             Recurrence.NONE:      "",
             Recurrence.DAILY:     "Ημερήσια",
@@ -323,10 +325,23 @@ class CalendarPage(ttk.Frame):
             Recurrence.YEARLY:    "Ετήσια",
         }
 
+        def go_to_event_day(event_date):
+            """
+            Συνάρτηση που καλείται όταν ο χρήστης κάνει κλικ σε ένα γεγονός.
+            Κλείνει το παράθυρο των γεγονότων, μεταβαίνει στο αντίστοιχο μήνα και
+            ανοίγει το χρονοδιάγραμμα για την συγκεκριμένη μέρα.
+            """
+            win.destroy()
+            self.update_calendar(event_date.year, event_date.month)
+            self.open_schedule_for_day(event_date.day)
+
+        # Δημιουργούμε την λίστα των γεγονότων
         for ev in all_events:
+            # Frame που κρατά κάθε γεγονός
             row = ttk.Frame(scrollable_frame, padding=5)
             row.pack(fill="x", padx=5, pady=2)
 
+            # Δημιουργούμε το κείμενο που δείχνει το γεγονός, προσθέτοντας και τις πληροφορίες επανάληψης
             recurring_text = ""
             if ev.recurrence != Recurrence.NONE:
                 freq_text = recurrence_map.get(ev.recurrence, "")
@@ -336,15 +351,21 @@ class CalendarPage(ttk.Frame):
                     recurring_text = f" [{freq_text}]"
 
             text = f"{ev.date.strftime('%d/%m/%Y')}  {ev.start_time.strftime('%H:%M')} – {ev.end_time.strftime('%H:%M')}  {ev.title}{recurring_text}"
-            lbl = ttk.Label(row, text=text)
+
+            # Ετικέτα με το κείμενο του γεγονότος, την κάνουμε clickable με pointer 'hand2'
+            lbl = ttk.Label(row, text=text, cursor="hand2")
             lbl.pack(side="left", expand=True, fill="x")
 
+            # Όταν γίνει κλικ στην ετικέτα, καλείται η go_to_event_day με την ημερομηνία του γεγονότος
+            lbl.bind("<Button-1>", lambda e, d=ev.date: go_to_event_day(d))
+
+            # Κουμπί επεξεργασίας γεγονότος
             btn_edit = ttk.Button(row, text="✎", width=3, command=lambda e=ev: self.edit_event(e))
             btn_edit.pack(side="right", padx=(2, 0))
 
+            # Κουμπί διαγραφής γεγονότος
             btn_del = ttk.Button(row, text="🗑", width=3, command=lambda e=ev: self.confirm_delete_event(e))
             btn_del.pack(side="right", padx=(2, 0))
-
 
 
     def open_new_event(self):
@@ -361,11 +382,6 @@ class CalendarPage(ttk.Frame):
             self.update_calendar(self.selected_year, self.selected_month)
         EventForm(win, owner=owner, on_success=refresher)
 
-    def open_delete_event(self):
-        """
-        Διαγραφή γεγονότος (υπό υλοποίηση).
-        """
-        messagebox.showinfo("Delete Event", "Υπό υλοποίηση")
 
     def edit_event(self, ev: Event):
         """

@@ -27,6 +27,7 @@ class EventForm:
         self.build_form()
         # Αν είναι επεξεργασία, προ-συμπλήρωση των πεδίων
         self.prefill_if_edit()
+        
 
     def build_form(self):
         # Δημιουργία ετικέτας και πεδίου για τον τίτλο
